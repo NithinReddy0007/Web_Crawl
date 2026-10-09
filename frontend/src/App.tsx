@@ -57,6 +57,9 @@ function App() {
       if (!response.ok) {
         throw new Error(data.detail || `Request failed (${response.status})`)
       }
+      if (!data.id) {
+        throw new Error('The API responded but did not start a scan — the deployed backend is an outdated version')
+      }
       setResult(data)
     } catch (err) {
       setError(
