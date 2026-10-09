@@ -1,5 +1,6 @@
 
 import { useState } from 'react'
+import ScanDashboard from './ScanDashboard'
 import './App.css'
 
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '')
@@ -129,19 +130,10 @@ function App() {
           </button>
 
           {error && <div className="message error-message" role="alert">{error}</div>}
-          {result && (
-            <div className="message success-message" role="status">
-              <strong>API response received</strong>
-              <p>Status: {result.status || 'unknown'}</p>
-              <p>Target: {result.target || url}</p>
-              {result.id && <p>Scan ID: {result.id}</p>}
-              <p className="result-note">
-                This confirms the API accepted the request; it does not confirm that crawling is complete.
-              </p>
-            </div>
-          )}
         </form>
-
+        {result && result.id && (
+          <ScanDashboard scanId={result.id} />
+        )}
         <div className="trust-note"><span>✳</span> Only scan websites you own or have permission to test.</div>
       </section>
 
