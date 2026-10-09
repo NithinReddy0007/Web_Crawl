@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 type Page = { url: string; status?: number | null; parent?: string | null; children?: Page[] };
 type Finding = { category: string; severity: string; url: string; error: string };
