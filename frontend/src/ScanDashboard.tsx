@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import TreeDiagram from './TreeDiagram'
 
 const API_URL = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') || 'http://localhost:8000'
 
@@ -34,7 +35,7 @@ export default function ScanDashboard({ scanId }: { scanId: string }) {
         }
       } catch (err) {
         console.error(err)
-        setFetchError('Cannot reach the API right now (it may be waking up). Retrying…')
+        setFetchError('Cannot reach the API right now (it may be waking up). Retrying...')
       }
     }, 2000)
     
@@ -50,24 +51,14 @@ export default function ScanDashboard({ scanId }: { scanId: string }) {
       <p>Pages Crawled: {progress.pages_crawled} / {progress.max_pages}</p>
       <p>Findings Detected: {progress.findings_detected}</p>
       
-      <h3>Pages Discovered</h3>
-      <ul>
-        {pages.map((p, i) => (
-          <li key={i}>{p.url} (Status: {p.status}) {p.parent ? ` - found on ${p.parent}` : ''}</li>
-        ))}
-      </ul>
-      
-      <h3>Findings</h3>
-      <ul>
-        {findings.map((f, i) => (
-          <li key={i}>[{f.severity}] {f.category} at {f.url} - {f.error}</li>
-        ))}
-      </ul>
+      <TreeDiagram pages={pages} findings={findings} />
       
       {['queued', 'running'].includes(progress.status) && (
         <button onClick={async () => {
           await fetch(`${API_URL}/api/scans/${scanId}/cancel`, { method: 'POST' })
-        }}>Cancel Scan</button>
+        }} style={{ marginTop: '1rem', padding: '0.5rem 1rem', background: '#dc3545', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+          Cancel Scan
+        </button>
       )}
     </div>
   )

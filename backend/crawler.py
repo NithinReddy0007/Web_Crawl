@@ -3,6 +3,7 @@ import ipaddress
 import os
 import socket
 from urllib.parse import urldefrag, urlparse
+from urllib.robotparser import RobotFileParser
 
 from playwright.async_api import async_playwright
 
@@ -19,7 +20,6 @@ SKIP_EXTENSIONS = (
 
 
 def _is_safe_url_sync(url: str) -> bool:
-    """Block non-http(s) URLs and hosts that resolve to private/internal addresses (SSRF guard)."""
     try:
         parsed = urlparse(url)
         if parsed.scheme not in ("http", "https") or not parsed.hostname:
@@ -36,7 +36,6 @@ def _is_safe_url_sync(url: str) -> bool:
 
 
 async def is_safe_url(url: str) -> bool:
-    # DNS lookups block, so keep them off the event loop.
     return await asyncio.to_thread(_is_safe_url_sync, url)
 
 
@@ -82,7 +81,15 @@ async def _async_crawl(scan_id: str):
     finally:
         db.close()
 
-    root_host = urlparse(start_url).hostname
+    parsed_root = urlparse(start_url)
+    root_host = parsed_root.hostname
+    rp = RobotFileParser()
+    rp.set_url(f"{parsed_root.scheme}://{root_host}/robots.txt")
+    try:
+        await asyncio.to_thread(rp.read)
+    except Exception:
+        pass 
+
     visited = set()
     queued = {start_url}
     queue = [(start_url, 0, None)]  # url, depth, parent_url
@@ -94,27 +101,25 @@ async def _async_crawl(scan_id: str):
             browser = await p.chromium.launch(
                 headless=True, args=["--no-sandbox", "--disable-dev-shm-usage"]
             )
-            context = await browser.new_context()
+            context = await browser.new_context(user_agent="WebCrawlBot/1.0")
             page = await context.new_page()
             current = {"url": start_url}
 
-            # Handlers only record findings; they use short-lived DB sessions.
             def on_request_failed(req):
-                add_finding(scan_id, "resource failure", "Medium", current["url"], req.url, req.failure)
+                add_finding(scan_id, "Request Failed", "Medium", current["url"], req.url, req.failure)
 
             def on_response(resp):
                 if resp.status >= 400 and resp.url != current["url"]:
                     kind = resp.request.resource_type
-                    cat = "API failure" if kind in ("fetch", "xhr") else "resource failure"
+                    cat = "API Error" if kind in ("fetch", "xhr") else "Request Failed"
+                    if resp.status == 404: cat = "Page Not Found"
+                    if resp.status >= 500: cat = "Server Error"
+                    if resp.status in (401, 403): cat = "Access Restricted"
                     add_finding(scan_id, cat, "High" if resp.status >= 500 else "Medium",
                                 current["url"], resp.url, f"HTTP {resp.status}")
 
-            def on_page_error(err):
-                add_finding(scan_id, "JavaScript error", "Low", current["url"], None, err)
-
             page.on("requestfailed", on_request_failed)
             page.on("response", on_response)
-            page.on("pageerror", on_page_error)
 
             while queue and crawled < max_pages:
                 if is_cancelled(scan_id):
@@ -125,8 +130,27 @@ async def _async_crawl(scan_id: str):
                 visited.add(current_url)
 
                 if not await is_safe_url(current_url):
-                    add_finding(scan_id, "blocked URL", "Low", parent_url or current_url,
+                    add_finding(scan_id, "Access Restricted", "Low", parent_url or current_url,
                                 current_url, "Skipped: not a public http(s) address")
+                    db = SessionLocal()
+                    try:
+                        db.add(Page(scan_id=scan_id, url=current_url, title=None,
+                                    status_code=None, parent_url=parent_url, depth=depth))
+                        db.commit()
+                    finally:
+                        db.close()
+                    continue
+                    
+                if not rp.can_fetch("WebCrawlBot/1.0", current_url):
+                    add_finding(scan_id, "Access Restricted", "Low", parent_url or current_url,
+                                current_url, "Skipped by robots.txt")
+                    db = SessionLocal()
+                    try:
+                        db.add(Page(scan_id=scan_id, url=current_url, title=None,
+                                    status_code=None, parent_url=parent_url, depth=depth))
+                        db.commit()
+                    finally:
+                        db.close()
                     continue
 
                 current["url"] = current_url
@@ -135,11 +159,15 @@ async def _async_crawl(scan_id: str):
                     response = await page.goto(current_url, timeout=15000, wait_until="domcontentloaded")
                     status = response.status if response else None
 
-                    # A redirect must not land on an internal address.
                     if not await is_safe_url(page.url):
                         raise RuntimeError("Redirected to a non-public address")
 
                     title = await page.title()
+                    content = await page.content()
+                    
+                    if "syntax error" in content.lower() and "database" in content.lower():
+                        add_finding(scan_id, "Database Error", "Critical", current_url, current_url, "Exposed DB error")
+
                     db = SessionLocal()
                     try:
                         db.add(Page(scan_id=scan_id, url=current_url, title=title,
@@ -149,10 +177,11 @@ async def _async_crawl(scan_id: str):
                         db.close()
 
                     if status is not None and status >= 400:
-                        category = "page error" if parent_url is None else "broken link"
-                        add_finding(scan_id, category, "High" if status >= 500 else "Medium",
+                        cat = "Page Not Found" if status == 404 else ("Server Error" if status >= 500 else "Request Failed")
+                        if status in (401, 403): cat = "Access Restricted"
+                        add_finding(scan_id, cat, "High" if status >= 500 else "Medium",
                                     parent_url or current_url, current_url, f"HTTP {status}")
-                        continue  # don't crawl error pages
+                        continue
 
                     if depth < max_depth:
                         hrefs = await page.eval_on_selector_all(
@@ -167,7 +196,7 @@ async def _async_crawl(scan_id: str):
                                 queued.add(link)
                                 queue.append((link, depth + 1, current_url))
                 except Exception as e:
-                    add_finding(scan_id, "page error", "High", current_url, current_url, e)
+                    add_finding(scan_id, "Request Failed", "High", current_url, current_url, str(e))
                     db = SessionLocal()
                     try:
                         db.add(Page(scan_id=scan_id, url=current_url, title=None,
@@ -179,7 +208,7 @@ async def _async_crawl(scan_id: str):
             await browser.close()
     except Exception as e:
         fatal = e
-        add_finding(scan_id, "scan error", "Critical", start_url, None, e)
+        add_finding(scan_id, "Server Error", "Critical", start_url, None, str(e))
 
     db = SessionLocal()
     try:
@@ -196,6 +225,4 @@ async def _async_crawl(scan_id: str):
 
 
 def crawl(scan_id: str):
-    """Entry point for FastAPI BackgroundTasks (runs in a worker thread with its own event loop,
-    which also avoids Playwright/asyncio subprocess problems on Windows)."""
     asyncio.run(_async_crawl(scan_id))
