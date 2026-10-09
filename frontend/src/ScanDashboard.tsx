@@ -6,12 +6,14 @@ export default function ScanDashboard({ scanId }: { scanId: string }) {
   const [progress, setProgress] = useState<any>(null)
   const [pages, setPages] = useState<any[]>([])
   const [findings, setFindings] = useState<any[]>([])
+  const [fetchError, setFetchError] = useState('')
 
   useEffect(() => {
     let interval = setInterval(async () => {
       try {
         const progRes = await fetch(`${API_URL}/api/scans/${scanId}/progress`)
         if (progRes.ok) {
+          setFetchError('')
           const progData = await progRes.json()
           setProgress(progData)
           if (progData.status !== 'queued' && progData.status !== 'running') {
@@ -32,13 +34,14 @@ export default function ScanDashboard({ scanId }: { scanId: string }) {
         }
       } catch (err) {
         console.error(err)
+        setFetchError('Cannot reach the API right now (it may be waking up). Retrying…')
       }
     }, 2000)
     
     return () => clearInterval(interval)
   }, [scanId])
 
-  if (!progress) return <div>Loading progress...</div>
+  if (!progress) return <div>{fetchError || 'Loading progress...'}</div>
 
   return (
     <div className="dashboard" style={{ marginTop: '2rem', padding: '1rem', border: '1px solid #ccc', borderRadius: '8px' }}>

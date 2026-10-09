@@ -1,6 +1,6 @@
 fastapi
-uvicorn
+uvicorn[standard]
 httpx
-playwright
+playwright==1.49.0
 sqlalchemy
 pydantic
