@@ -1,0 +1,212 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {
+    "schema_version": 1,
+    "graphify_version": "0.9.82"
+  },
+  "nodes": [
+    {
+      "id": "main_scanrequest",
+      "label": "ScanRequest",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 0,
+      "file_type": "code",
+      "norm_label": "scanrequest",
+      "source_file": "main.py",
+      "source_location": "L6"
+    },
+    {
+      "id": "main_create_scan",
+      "label": "create_scan()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 0,
+      "file_type": "code",
+      "norm_label": "create_scan()",
+      "source_file": "main.py",
+      "source_location": "L12"
+    },
+    {
+      "id": "main_get_scan",
+      "label": "get_scan()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "file_type": "code",
+      "norm_label": "get_scan()",
+      "source_file": "main.py",
+      "source_location": "L16"
+    },
+    {
+      "id": "basemodel",
+      "label": "BaseModel",
+      "_origin": "ast",
+      "community": 0,
+      "file_type": "code",
+      "norm_label": "basemodel",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "post",
+      "label": "post",
+      "_origin": "ast",
+      "community": 0,
+      "file_type": "code",
+      "norm_label": "post",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "main",
+      "label": "main.py",
+      "_origin": "ast",
+      "community": 1,
+      "file_type": "code",
+      "norm_label": "main.py",
+      "source_file": "main.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "get",
+      "label": "get",
+      "_origin": "ast",
+      "community": 2,
+      "file_type": "code",
+      "norm_label": "get",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "fastapi",
+      "label": "fastapi",
+      "community": 1,
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "fastapi",
+      "source_file": "",
+      "type": "external"
+    },
+    {
+      "id": "pydantic",
+      "label": "pydantic",
+      "community": 1,
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "pydantic",
+      "source_file": "",
+      "type": "external"
+    }
+  ],
+  "links": [
+    {
+      "source": "main_create_scan",
+      "target": "post",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "decorator",
+      "source_file": "main.py",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "main_get_scan",
+      "target": "get",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "decorator",
+      "source_file": "main.py",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "main",
+      "target": "fastapi",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "main.py",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "main",
+      "target": "pydantic",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "main.py",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "main_create_scan",
+      "target": "main_scanrequest",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "parameter_type",
+      "source_file": "main.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "main",
+      "target": "main_create_scan",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "main.py",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "main",
+      "target": "main_get_scan",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "main.py",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "main",
+      "target": "main_scanrequest",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "main.py",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "main_scanrequest",
+      "target": "basemodel",
+      "relation": "inherits",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "main.py",
+      "source_location": "L6",
+      "weight": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "7df695e18cd35abc91c5e3278720110e9cb906ee"
+}

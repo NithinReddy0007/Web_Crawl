@@ -1,0 +1,46 @@
+{
+  "communities": {
+    "0": [
+      "basemodel",
+      "main_create_scan",
+      "main_scanrequest",
+      "post"
+    ],
+    "1": [
+      "fastapi",
+      "main",
+      "pydantic"
+    ],
+    "2": [
+      "get",
+      "main_get_scan"
+    ]
+  },
+  "cohesion": {
+    "0": 0.5,
+    "1": 0.6666666666666666,
+    "2": 1.0
+  },
+  "gods": [
+    {
+      "id": "main_scanrequest",
+      "label": "ScanRequest",
+      "degree": 3
+    },
+    {
+      "id": "main_create_scan",
+      "label": "create_scan()",
+      "degree": 3
+    },
+    {
+      "id": "main_get_scan",
+      "label": "get_scan()",
+      "degree": 2
+    }
+  ],
+  "surprises": [],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}
