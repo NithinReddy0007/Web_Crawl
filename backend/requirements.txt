@@ -1,6 +1,0 @@
-fastapi
-uvicorn[standard]
-httpx
-playwright==1.49.0
-sqlalchemy
-pydantic

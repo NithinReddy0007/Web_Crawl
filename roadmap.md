@@ -1,0 +1,3 @@
+- [x] Implement SRD-aligned WebSleuth scan setup and live results on `/`.
+- [x] Render a robust, accessible hierarchical page tree with status, findings, and path highlighting.
+- [x] Add tree logic tests, route metadata, and semantic styling; verify the preview and diagnostics.
