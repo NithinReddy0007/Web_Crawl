@@ -101,7 +101,7 @@ export const Route = createFileRoute("/")({
   component: WebSleuthWorkspace,
 });
 
-function WebSleuthWorkspace() {
+export function WebSleuthWorkspace() {
   const [url, setUrl] = useState("");
   const [depth, setDepth] = useState("2");
   const [maxPages, setMaxPages] = useState("25");
